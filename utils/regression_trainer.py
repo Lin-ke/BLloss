@@ -126,7 +126,7 @@ class RegTrainer(Trainer):
                     if prob is None:  # image contains no annotation points,ot = None
                         # pre_count是这一列的求和
                         pre_count = torch.sum(outputs[idx])
-        
+        # what will ot do?
                         # target = 0
                         target = torch.zeros((1,), dtype=torch.float32, device=self.device)
                     else:
