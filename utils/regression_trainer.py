@@ -82,7 +82,8 @@ class RegTrainer(Trainer):
         self.best_mae = np.inf
         self.best_mse = np.inf
         self.best_count = 0
-
+        self.use_bg = args.use_background
+        self.l = 0.01
     def train(self):
         """training process"""
         args = self.args
@@ -118,20 +119,35 @@ class RegTrainer(Trainer):
             with torch.set_grad_enabled(True):
                 outputs = self.model(inputs)
                 prob_list,ot_list = self.post_prob(points, st_sizes)
-                loss = self.criterion(prob_list,ot_list, targets, outputs)
-                # 梯度清零，反向传播，更新参数
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-
-                N = inputs.size(0)
-                # 本次的count（将所有density求和）
-                # outputs是个device：cuda tensor，numpy不能读。为了让numpy读需要.detach.cpu.numpy
-                pre_count = torch.sum(outputs.view(N, -1), dim=1).detach().cpu().numpy()
-                res = pre_count - gd_count
-                epoch_loss.update(loss.item(), N)
-                epoch_mse.update(np.mean(res * res), N)
-                epoch_mae.update(np.mean(abs(res)), N)
+                loss1 = 0
+                loss2 = 0
+        # enumerate(p)-> (1,p1),(2,p2),(3,p3)
+                for idx, prob in enumerate(prob_list):  # iterative through each sample
+                    if prob is None:  # image contains no annotation points,ot = None
+                        # pre_count是这一列的求和
+                        pre_count = torch.sum(outputs[idx])
+        
+                        # target = 0
+                        target = torch.zeros((1,), dtype=torch.float32, device=self.device)
+                    else:
+                        
+                        N = len(prob) # 一张图有n个像素(或者n-1和bg)
+                        if self.use_bg:
+                            
+                            target = torch.zeros((N,), dtype=torch.float32, device=self.device)
+                            # 除了最后一个
+                            target[:-1] = targets[idx]
+                        else:
+                            target = targets[idx]
+                        # \sum density*prob
+                        pre_count = torch.sum(outputs[idx].view((1, -1)) * prob, dim=1)  # flatten into vector
+                        # ot_loss
+                        loss1 += self.l*torch.sum(outputs[idx].view((1, -1))*ot_list[idx])
+                    #loss = |total-pred|+lambda* density* [...k,0,...]
+            # target = 0/1, precount 看来是对行求和了
+                    loss2 += torch.sum(torch.abs(target - pre_count)) 
+                loss = loss1+loss2
+                loss = loss / len(prob_list)
 
         logging.info('Epoch {} Train, Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
                      .format(self.epoch, epoch_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(),
