@@ -147,7 +147,21 @@ class RegTrainer(Trainer):
                     loss2 += torch.sum(torch.abs(target - pre_count)) 
                 loss = loss1+loss2
                 loss = loss / len(prob_list)
+                
                 logging.info(loss)
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+                N = inputs.size(0)
+                # 本次的count（将所有density求和）
+                # outputs是个device：cuda tensor，numpy不能读。为了让numpy读需要.detach.cpu.numpy
+                pre_count = torch.sum(outputs.view(N, -1), dim=1).detach().cpu().numpy()
+                res = pre_count - gd_count
+                epoch_loss.update(loss.item(), N)
+                epoch_mse.update(np.mean(res * res), N)
+                epoch_mae.update(np.mean(abs(res)), N)
+        
         logging.info('Epoch {} Train, Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
                      .format(self.epoch, epoch_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(),
                              time.time()-epoch_start))
