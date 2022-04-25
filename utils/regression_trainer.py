@@ -77,7 +77,6 @@ class RegTrainer(Trainer):
                                    args.use_background,
                                    self.device)
                     # 引用：bayloss
-        self.criterion = Bay_Loss(args.use_background, self.device)
         self.save_list = Save_Handle(max_num=args.max_model_num)
         self.best_mae = np.inf
         self.best_mse = np.inf
@@ -148,7 +147,7 @@ class RegTrainer(Trainer):
                     loss2 += torch.sum(torch.abs(target - pre_count)) 
                 loss = loss1+loss2
                 loss = loss / len(prob_list)
-
+                logging.info(loss)
         logging.info('Epoch {} Train, Loss: {:.2f}, MSE: {:.2f} MAE: {:.2f}, Cost {:.1f} sec'
                      .format(self.epoch, epoch_loss.get_avg(), np.sqrt(epoch_mse.get_avg()), epoch_mae.get_avg(),
                              time.time()-epoch_start))
