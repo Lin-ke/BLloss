@@ -10,15 +10,13 @@ args = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test ')
-    parser.add_argument('--data-dir', default='./dataset/UCF-Train-Val-Test',
+    parser.add_argument('--data-dir', default='/content/drive/MyDrive/UCF-Train-Val-Test',
                         help='training data directory')
     parser.add_argument('--save-dir', default='',
                         help='model directory')
     parser.add_argument('--device', default='0', help='assign device')
     args = parser.parse_args()
     return args
-
-
 if __name__ == '__main__':
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device.strip()  # set vis gpu
@@ -28,11 +26,10 @@ if __name__ == '__main__':
                                              num_workers=8, pin_memory=False)
     model = vgg19()
     # using cpu
-    device = torch.device('cpu')
+    device = torch.device('cuda')
     model.to(device)
-    # checkpoint = torch.load(os.path.join(args.save_dir, '1.tar'),map_location="cpu")
-    # model.load_state_dict(checkpoint['model_state_dict'], device)
-    checkpoint = torch.load( 'best_model.pth',map_location="cpu")
+    checkpoint = torch.load(args.save_dir,map_location="cuda")
+    model.load_state_dict(checkpoint['model_state_dict'], device)
     epoch_minus = []
 
     for inputs, count, name in dataloader:
@@ -43,9 +40,6 @@ if __name__ == '__main__':
             temp_minu = count[0].item() - torch.sum(outputs).item()
             print(name, temp_minu, count[0].item(), torch.sum(outputs).item())
             epoch_minus.append(temp_minu)
-            dm = outputs.squeeze().detach().cpu().numpy()
-            plt.imshow(dm, cmap=plt.cm.jet)
-            plt.savefig("./pics/"+name[0]+".jpg")
     # visual
     epoch_minus = np.array(epoch_minus)
     mse = np.sqrt(np.mean(np.square(epoch_minus)))

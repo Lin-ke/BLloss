@@ -48,6 +48,8 @@ class Post_Prob(Module):
                     dist = -dis / (2.0 * self.sigma ** 2)
                     # 后验for all points
                     prob = self.softmax(dist)
+                    # dis是不是应该先归一化啊
+                    dis = dis/64
                     ot = torch.sum(prob*torch.exp(0.01*(torch.sqrt(torch.abs(dis)+0.0001))),dim=0)
 
                 else:
