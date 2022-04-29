@@ -48,7 +48,7 @@ class Post_Prob(Module):
                     dist = -dis / (2.0 * self.sigma ** 2)
                     # 后验for all points
                     prob = self.softmax(dist)
-                    ot = 0.5*torch.sum(prob*torch.exp(0.1*(torch.sqrt(dis+0.000001))),dim=0)
+                    ot = torch.sum(prob*torch.exp(0.01*(torch.sqrt(torch.abs(dis)+0.0001))),dim=0)
 
                 else:
                     prob = None
