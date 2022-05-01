@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument('--downsample-ratio', type=int, default=8,
                         help='downsample ratio')
 
-    parser.add_argument('--use-background', type=bool, default=True,
+    parser.add_argument('--use-background', type=bool, default=False,
                         help='whether to use background modelling')
     parser.add_argument('--sigma', type=float, default=8.0,
                         help='sigma for likelihood')
