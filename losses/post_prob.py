@@ -1,5 +1,4 @@
 import torch
-import logging
 from torch.nn import Module
 
 class Post_Prob(Module):
