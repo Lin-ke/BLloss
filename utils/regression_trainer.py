@@ -80,7 +80,9 @@ class RegTrainer(Trainer):
         self.best_mae = np.inf
         self.best_mse = np.inf
         self.best_count = 0
+        
         self.use_bg = args.use_background
+        self.e = 1e-5
         self.l = 0.01
     def train(self):
         """training process"""
@@ -119,6 +121,7 @@ class RegTrainer(Trainer):
                 prob_list,ot_list = self.post_prob(points, st_sizes)
                 loss1 = 0
                 loss2 = 0
+                loss3 = 0
         # enumerate(p)-> (1,p1),(2,p2),(3,p3)
                 for idx, prob in enumerate(prob_list):  # iterative through each sample
                     if prob is None:  # image contains no annotation points,ot = None
@@ -140,11 +143,13 @@ class RegTrainer(Trainer):
                         # \sum density*prob
                         pre_count = torch.sum(outputs[idx].view((1, -1)) * prob, dim=1)  # flatten into vector
                         # ot_loss
-                        loss1 += self.l*torch.sum(outputs[idx].view((1, -1))*ot_list[idx])
+                        ot_l = outputs[idx].view((1, -1))*ot_list[idx]
+                        loss1 += self.l*torch.sum(ot_l)
+                        loss3 += self.e*torch.sum(ot_l*(torch.log(ot_l)-1)+1)
                     #loss = |total-pred|+lambda* density* [...k,0,...]
             # target = 0/1, precount 看来是对行求和了
                     loss2 += torch.sum(torch.abs(target - pre_count)) 
-                loss = loss1+loss2
+                loss = loss1+loss2+loss3
                 loss = loss / len(prob_list)
                 
                 logging.info(loss)
