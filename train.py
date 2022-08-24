@@ -6,7 +6,7 @@ args = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train ')
-    parser.add_argument('--data-dir', default='/content/drive/MyDrive/UCF-Train-Val-Test',
+    parser.add_argument('--data-dir', default='./datasets/UCF-Train-Val-Test',
                         help='training data directory')
     parser.add_argument('--save-dir', default='./vgg',
                         help='directory to save models.')
@@ -26,10 +26,10 @@ def parse_args():
     parser.add_argument('--val-start', type=int, default=600,
                         help='the epoch start to val')
 
-    parser.add_argument('--batch-size', type=int, default=16,
+    parser.add_argument('--batch-size', type=int, default=4,
                         help='train batch size')
     parser.add_argument('--device', default='0', help='assign device')
-    parser.add_argument('--num-workers', type=int, default=8,
+    parser.add_argument('--num-workers', type=int, default=6,
                         help='the num of training process')
 
     parser.add_argument('--is-gray', type=bool, default=False,
